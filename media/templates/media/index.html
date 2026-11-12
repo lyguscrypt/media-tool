@@ -1,0 +1,81 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Media Tool</title>
+  <link rel="stylesheet" href="{% static 'media/style.css' %}">
+  <script src="{% static 'media/app.js' %}" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <p class="eyebrow">YOUR LOCAL MEDIA WORKSPACE</p>
+      <h1>Media Tool<span>.</span></h1>
+      <p class="intro">Cut audio or save YouTube audio and thumbnails, all in one place.</p>
+    </header>
+
+    {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+    {% if results %}
+      <section class="notice success" aria-live="polite">
+        <strong>Processing complete</strong>
+        <p>Output saved to:</p>
+        {% for path in output_paths %}<code class="output-path">{{ path }}</code>{% endfor %}
+      </section>
+    {% endif %}
+
+    <div class="cards">
+      <section class="card" id="cut">
+        <div class="card-heading"><span class="number">01</span><span class="tag">FFMPEG</span></div>
+        <h2>Cut media</h2>
+        <p>Choose a file and extract audio as an M4A, optionally trimming it.</p>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="cut">
+          {{ cut_form.non_field_errors }}
+          <div class="field">{{ cut_form.media_file.label_tag }}{{ cut_form.media_file }}{{ cut_form.media_file.errors }}</div>
+          <div class="time-fields">
+            <div class="field">{{ cut_form.start_time.label_tag }}{{ cut_form.start_time }}{{ cut_form.start_time.errors }}</div>
+            <div class="field">{{ cut_form.end_time.label_tag }}{{ cut_form.end_time }}{{ cut_form.end_time.errors }}</div>
+          </div>
+          <p class="hint">Use HH:MM:SS, e.g. 00:01:30. Leave the end time blank for the whole file (start time is ignored). With an end time, a blank start means the beginning.</p>
+          <button type="submit">Extract audio <span aria-hidden="true">→</span></button>
+          {% include "media/processing_status.html" %}
+        </form>
+      </section>
+
+      <section class="card" id="download">
+        <div class="card-heading"><span class="number">02</span><span class="tag">YT-DLP</span></div>
+        <h2>YouTube audio</h2>
+        <p>Download audio as an M4A with the video thumbnail embedded.</p>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="download">
+          {{ download_form.non_field_errors }}
+          <div class="field">{{ download_form.url.label_tag }}{{ download_form.url }}{{ download_form.url.errors }}</div>
+          <p class="hint">The video title is used as the output filename.</p>
+          <button type="submit">Download audio <span aria-hidden="true">→</span></button>
+          {% include "media/processing_status.html" %}
+        </form>
+      </section>
+
+      <section class="card" id="thumbnail">
+        <div class="card-heading"><span class="number">03</span><span class="tag">YT-DLP</span></div>
+        <h2>YouTube thumbnail</h2>
+        <p>Download the thumbnail for a YouTube video or playlist.</p>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="thumbnail">
+          {{ thumbnail_form.non_field_errors }}
+          <div class="field">{{ thumbnail_form.url.label_tag }}{{ thumbnail_form.url }}{{ thumbnail_form.url.errors }}</div>
+          <p class="hint">The video title is used as the filename. Playlist links download every thumbnail and can take a long time; use a video-only URL for one thumbnail.</p>
+          <button type="submit">Download thumbnail <span aria-hidden="true">→</span></button>
+          {% include "media/processing_status.html" %}
+        </form>
+      </section>
+    </div>
+    <footer>Files stay on the computer running this app. Processing can take a while; keep this page open.</footer>
+  </main>
+</body>
+</html>
